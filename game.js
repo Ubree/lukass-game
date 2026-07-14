@@ -123,7 +123,8 @@ canvas.addEventListener('mousedown', e => {
 addEventListener('mouseup', e => { if (e.button === 2) input.shieldHeld = false; });
 addEventListener('contextmenu', e => e.preventDefault());
 
-function readMoveInput() {
+const _rawMove = new THREE.Vector2();
+function readMoveInput(dt) {
   let x = 0, y = 0;
   const k = input.keys;
   if (k['KeyW'] || k['ArrowUp']) y -= 1;
@@ -131,9 +132,11 @@ function readMoveInput() {
   if (k['KeyA'] || k['ArrowLeft']) x -= 1;
   if (k['KeyD'] || k['ArrowRight']) x += 1;
   if (joy.active) { x += joy.x; y += joy.y; }
-  const v = new THREE.Vector2(x, y);
-  if (v.lengthSq() > 1) v.normalize();
-  input.move.copy(v);
+  _rawMove.set(x, y);
+  if (_rawMove.lengthSq() > 1) _rawMove.normalize();
+  // low-pass filter: input ramps in/out instead of snapping — smoother feel
+  input.move.lerp(_rawMove, 1 - Math.exp(-9 * dt));
+  if (_rawMove.lengthSq() === 0 && input.move.lengthSq() < 0.004) input.move.set(0, 0);
 }
 
 // ---------------- Touch controls ----------------
@@ -427,7 +430,7 @@ function updatePlayer(dt) {
   input.wigglePresses = 0;
 
   // ---- movement (camera-relative) ----
-  readMoveInput();
+  readMoveInput(dt);
   const camYawV = cam.yaw;
   const fwd = new THREE.Vector3(-Math.sin(camYawV), 0, -Math.cos(camYawV));
   const right = new THREE.Vector3(-fwd.z, 0, fwd.x);
@@ -437,14 +440,14 @@ function updatePlayer(dt) {
   const wishLen = Math.min(1, wish.length());
   if (wishLen > 0.01) wish.normalize();
 
-  const MAXSPD = 11, ACCEL = 55;
+  const MAXSPD = 11, ACCEL = 46;
   const hv = new THREE.Vector3(player.vel.x, 0, player.vel.z);
   if (wishLen > 0.01) {
     hv.addScaledVector(wish, ACCEL * dt * wishLen);
     if (hv.length() > MAXSPD * wishLen) hv.setLength(Math.max(MAXSPD * wishLen, hv.length() - ACCEL * 1.6 * dt));
-    player.heading = dampAngle(player.heading, Math.atan2(wish.x, wish.z), 12, dt);
+    player.heading = dampAngle(player.heading, Math.atan2(wish.x, wish.z), 8.5, dt);
   } else {
-    const drag = Math.exp(-dt * 7);
+    const drag = Math.exp(-dt * 4.6); // softer hover-glide stop
     hv.multiplyScalar(drag);
     if (hv.length() < 0.05) hv.set(0, 0, 0);
   }
@@ -696,7 +699,7 @@ function updateCamera(dt) {
   const hits = blockers.length ? ray.intersectObjects(blockers, false) : [];
   if (hits.length) desired.copy(head).addScaledVector(dir, Math.max(1.2, hits[0].distance - 0.4));
 
-  const k = 1 - Math.exp(-dt * 5.5);
+  const k = 1 - Math.exp(-dt * 4.6);
   cam.pos.lerp(desired, k);
 
   const lookTarget = player.pos.clone();
@@ -1021,8 +1024,8 @@ class TetisBot {
   startFight() {
     if (this.active || this.freed) return;
     this.active = true;
-    showBossBar('TĒTIS-BOT 🥿 (hypnotized)', true);
-    setObjective('Free Tētis-Bot! Knock the virus out!');
+    showBossBar('TĒTIS 🥿 (hypnotized)', true);
+    setObjective('Free Tētis! Knock the virus out!');
     const c = this.group.position;
     startCine({
       dur: 2.2, hold: 0.8,
@@ -1031,7 +1034,7 @@ class TetisBot {
       look: new THREE.Vector3(c.x, c.y + 3, c.z),
       onDone: () => {
         say(this.group, 'INTRUDER... zzz... wait... Lūkass?! MUST... OBEY... VIRUS!', 3.5, 6.2);
-        showBanner('TĒTIS-BOT has been hypnotized!\nFree him, Lūkass!', 3);
+        showBanner('TĒTIS has been hypnotized!\nFree him, Lūkass!', 3);
       },
     });
     Sfx.play('warning');
@@ -1234,8 +1237,8 @@ class MammaBot {
     this.mode = 'fight';
     this.group.userData.beam.visible = false;
     this.group.position.copy(this.center).add(new THREE.Vector3(0, 0.6, -6));
-    showBossBar('MAMMA-BOT 🧹 (hypnotized)', true);
-    setObjective('Free Mamma-Bot! Knock the virus out!');
+    showBossBar('MAMMA 🧹 (hypnotized)', true);
+    setObjective('Free Mamma! Knock the virus out!');
     const c = this.group.position;
     startCine({
       dur: 2.0, hold: 0.8,
@@ -1244,7 +1247,7 @@ class MammaBot {
       look: new THREE.Vector3(c.x, c.y + 3, c.z),
       onDone: () => {
         say(this.group, 'Lūkass!! Have you EATEN?! VIRUS SAYS... ATTACK! 🥦', 3.5, 6.6);
-        showBanner('MAMMA-BOT has been hypnotized!\nFree her, Lūkass!', 3);
+        showBanner('MAMMA has been hypnotized!\nFree her, Lūkass!', 3);
       },
     });
     Sfx.play('warning');
@@ -1439,7 +1442,7 @@ class MammaBot {
     if (this.mode === 'fight') {
       this.group.position.copy(this.center).add(new THREE.Vector3(0, 0.6, -6));
       this.state = 'glide'; this.stateT = 2;
-      showBossBar('MAMMA-BOT 🧹 (hypnotized)', true);
+      showBossBar('MAMMA 🧹 (hypnotized)', true);
       setBossBar(1);
     }
   }
@@ -1808,7 +1811,7 @@ function onVictory() {
     const t = Math.floor((performance.now() - S.stats.startTime) / 1000);
     const mm = String(Math.floor(t / 60)).padStart(2, '0'), ss = String(t % 60).padStart(2, '0');
     dom.victoryStats.textContent =
-      `⭐ PILOT: ${PLAYER_NAME} ⭐\n⏱ Time: ${mm}:${ss}\n🤖 Bots defeated: ${S.stats.kills}\n👨‍👩‍👦 Family freed: Tētis-Bot & Mamma-Bot ❤\n💎 The Sky Sanctuary shines again!`;
+      `⭐ PILOT: ${PLAYER_NAME} ⭐\n⏱ Time: ${mm}:${ss}\n🤖 Bots defeated: ${S.stats.kills}\n👨‍👩‍👦 Family freed: Tētis & Mamma ❤\n💎 The Sky Sanctuary shines again!`;
     dom.victory.classList.remove('hidden');
   }, 4200);
 }
@@ -1833,7 +1836,7 @@ const tut = {
   step: -1, done: false,
   start() {
     this.step = 0; this.done = false;
-    showHint(IS_TOUCH ? `Move with the LEFT STICK, ${PLAYER_NAME}!` : `Move with WASD, ${PLAYER_NAME}!`, 99);
+    showHint(IS_TOUCH ? `Move with the RIGHT STICK, ${PLAYER_NAME}!` : `Move with WASD, ${PLAYER_NAME}!`, 99);
   },
   onMove() { if (this.step === 0) { this.step = 1; showHint(IS_TOUCH ? 'Hold 🚀 to BOOST-JUMP!' : 'Hold SPACE to BOOST-JUMP!', 99); } },
   onJump() { if (this.step === 1) { this.step = 2; showHint(IS_TOUCH ? 'Tap ⚔ to swing your sword!' : 'CLICK or press J to swing your sword!', 99); } },
@@ -2182,7 +2185,7 @@ function buildLevel2() {
   L.spawn.set(0, H + 1.2, 3);
   L.checkpoint.copy(L.spawn);
 
-  setObjective('Cross the lava bridges! Watch out for Mamma-Bot!');
+  setObjective('Cross the lava bridges! Watch out for Mamma!');
   dom.coreCount.textContent = '5 / 5';
   Sfx.setTheme('lava');
 
@@ -2191,7 +2194,7 @@ function buildLevel2() {
 
   setupPlayer(L.spawn);
   showBanner('LEVEL 2\n🌋 THE LAVA CORE 🌋', 3);
-  setTimeout(() => showHint('Sneak past Mamma-Bot\'s vacuum beam! Hide behind pillars!', 5), 3200);
+  setTimeout(() => showHint('Sneak past Mamma\'s vacuum beam! Hide behind pillars!', 5), 3200);
 }
 
 // ---------------- Save / Load ----------------
