@@ -1,0 +1,15 @@
+# OS junk
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# editors
+.vscode/
+.idea/
+
+# node (if a local server/tooling ever gets installed)
+node_modules/
+npm-debug.log*
+
+# claude scratch
+.claude/

@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>Cyber-Shield: Spark's Rescue — Pilot Lūkass</title>
+<link rel="stylesheet" href="style.css">
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.160.1/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.1/examples/jsm/"
+} }
+</script>
+</head>
+<body>
+<canvas id="c"></canvas>
+
+<!-- ============ HUD ============ -->
+<div id="hud" class="hidden">
+  <div id="pilot-tag">PILOT: LŪKASS</div>
+
+  <div id="bars">
+    <div class="bar-wrap" id="health-wrap">
+      <div class="bar-label">❤ HP</div>
+      <div class="bar-track"><div class="bar-fill" id="health-bar"></div></div>
+    </div>
+    <div class="bar-wrap" id="energy-wrap">
+      <div class="bar-label">⚡ EN</div>
+      <div class="bar-track"><div class="bar-fill" id="energy-bar"></div></div>
+    </div>
+  </div>
+
+  <div id="cores"><span id="core-icon">⬡</span> <span id="core-count">0 / 5</span></div>
+
+  <div id="objective">Find the Nexus Cores!</div>
+
+  <div id="boss-wrap" class="hidden">
+    <div id="boss-name">GIGA-DRILL</div>
+    <div id="boss-track">
+      <div id="boss-bar"></div>
+      <div class="boss-seg" style="left:33.33%"></div>
+      <div class="boss-seg" style="left:66.66%"></div>
+    </div>
+  </div>
+
+  <button id="btn-pause" class="hud-btn" aria-label="Pause">⏸</button>
+  <button id="btn-mute" class="hud-btn" aria-label="Mute">🔊</button>
+</div>
+
+<div id="hint" class="hidden"></div>
+<div id="banner" class="hidden"></div>
+<div id="speech" class="hidden"></div>
+<div id="dmg-layer"></div>
+
+<div id="flash"></div>
+<div id="vignette-red"></div>
+<div id="letterbox-top" class="letterbox"></div>
+<div id="letterbox-bottom" class="letterbox"></div>
+
+<!-- ============ TOUCH CONTROLS ============ -->
+<div id="touch" class="hidden">
+  <div id="joy-zone">
+    <div id="joy-ring" class="hidden"><div id="joy-nub"></div></div>
+  </div>
+  <div id="touch-buttons">
+    <button class="tbtn" id="btn-shield">🛡</button>
+    <button class="tbtn" id="btn-attack">⚔</button>
+    <button class="tbtn big" id="btn-jump">🚀</button>
+  </div>
+</div>
+
+<!-- ============ SCREENS ============ -->
+<div id="title-screen" class="screen">
+  <div class="title-inner">
+    <div id="game-logo">
+      <div id="logo-top">CYBER-SHIELD</div>
+      <div id="logo-sub">SPARK'S RESCUE</div>
+    </div>
+    <div id="title-pilot">★ PILOT: LŪKASS ★</div>
+    <div id="diff-row">
+      <button class="diff-btn selected" id="diff-explorer">🟢 EXPLORER</button>
+      <button class="diff-btn" id="diff-hero">🔵 HERO</button>
+    </div>
+    <div id="title-buttons">
+      <button class="menu-btn primary" id="btn-new">▶ NEW GAME</button>
+      <button class="menu-btn hidden" id="btn-continue">↻ CONTINUE</button>
+    </div>
+    <div id="title-tip">WASD / Arrows — move · SPACE — boost jump · CLICK / J — sword · SHIFT / K — shield</div>
+  </div>
+</div>
+
+<div id="pause-screen" class="screen hidden">
+  <div class="panel">
+    <h2>PAUSED</h2>
+    <button class="menu-btn primary" id="btn-resume">▶ RESUME</button>
+    <button class="menu-btn" id="btn-quit">🏠 TITLE SCREEN</button>
+  </div>
+</div>
+
+<div id="victory-screen" class="screen hidden">
+  <div class="panel gold">
+    <h1>🏆 LŪKASS SAVED THE SANCTUARY! 🏆</h1>
+    <div id="victory-stats"></div>
+    <button class="menu-btn primary" id="btn-again">▶ PLAY AGAIN</button>
+  </div>
+</div>
+
+<div id="defeat-screen" class="screen hidden">
+  <div class="panel">
+    <h2>Almost had it, Lūkass!</h2>
+    <p id="defeat-sub">Spark got a bit banged up… Try again?</p>
+    <button class="menu-btn primary" id="btn-retry">▶ TRY AGAIN</button>
+  </div>
+</div>
+
+<div id="rotate-overlay" class="hidden">
+  <div class="rotate-inner">🔄<br>Rotate your device, Lūkass!</div>
+</div>
+
+<script type="module" src="game.js"></script>
+</body>
+</html>
