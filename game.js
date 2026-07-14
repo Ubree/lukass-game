@@ -272,6 +272,11 @@ function updateDmgNums(dt) {
 let flashV = 0, flashColor = '#fff';
 function flash(intensity = 1, color = '#fff') { flashV = Math.max(flashV, intensity); flashColor = color; }
 
+// haptics — works on Android; iPhones don't expose vibration to web pages
+function buzz(pattern) {
+  try { if (navigator.vibrate) navigator.vibrate(pattern); } catch {}
+}
+
 // ---------------- Particles (pooled Points) ----------------
 const P_MAX = Math.floor(700 * Q.particles);
 class Particles {
@@ -632,7 +637,7 @@ function doSwordHit() {
       pr.dead = true; FX.burst(pr.mesh.position, 0x88ccff, 10, 4, 1.3, 0.4, 2); Sfx.play('pop');
     }
   }
-  if (hitAny) { S.hitstop = Math.max(S.hitstop, 0.06); }
+  if (hitAny) { S.hitstop = Math.max(S.hitstop, 0.06); buzz(20); }
   FX.burst(hitPos, 0x66e0ff, 5, 3, 1.1, 0.25, 0);
 }
 
@@ -646,6 +651,7 @@ function damagePlayer(amount, sourcePos, ignoreInvuln = false) {
   player.invuln = Math.max(player.invuln, 1.0);
   player.lastHurt = 0;
   S.shake = Math.max(S.shake, 0.35);
+  buzz(45);
   Sfx.play('hurt');
   dom.healthWrap.classList.remove('hurt'); dom.healthWrap.offsetHeight; dom.healthWrap.classList.add('hurt');
   dom.vignette.style.opacity = 0.9;
@@ -662,6 +668,7 @@ function rescueTeleport(playSfx = true) {
     Sfx.play('teleport');
   }
   flash(0.8, '#9fdcff');
+  buzz(40);
   FX.burst(player.pos, 0x66ccff, 16, 6, 1.6, 0.6, 0);
   player.pos.copy(player.lastSafe);
   player.pos.y += 0.5;
@@ -845,6 +852,7 @@ function spawnShockwave(center, maxR, dmg, color = 0xff8844, speed = 10) {
   mesh.position.copy(center); mesh.position.y += 0.3;
   scene.add(mesh);
   L.shockwaves.push({ mesh, mat, r: 1, maxR, dmg, speed, hitDone: false, center: center.clone() });
+  buzz(35);
   Sfx.play('stomp');
   S.shake = Math.max(S.shake, 0.5);
 }
@@ -928,6 +936,7 @@ class Drone {
   die() {
     this.dead = true;
     S.stats.kills++;
+    buzz(60);
     Sfx.play('explosion');
     S.shake = Math.max(S.shake, 0.3);
     FX.burst(this.group.position, 0xff8844, 22, 7, 2, 0.8, 6);
@@ -1043,6 +1052,7 @@ class TetisBot {
   free() {
     this.freed = true; this.active = false;
     hideBossBar();
+    buzz([60, 60, 60, 60, 120]);
     Sfx.play('powerup');
     flash(0.9, '#aaffcc');
     this.group.userData.eyeMat.emissive.setHex(0x22ff66);
@@ -1256,6 +1266,7 @@ class MammaBot {
   free() {
     this.freed = true; this.mode = 'freed';
     hideBossBar();
+    buzz([60, 60, 60, 60, 120]);
     Sfx.play('powerup');
     flash(0.9, '#ffddee');
     this.group.userData.eyeMat.emissive.setHex(0x22ff66);
@@ -1498,6 +1509,7 @@ class GigaDrill {
     FX.burst(this.weakWorldPos(), 0x66e0ff, 16, 7, 1.8, 0.6, 4);
     S.hitstop = Math.max(S.hitstop, 0.07);
     S.shake = Math.max(S.shake, 0.3);
+    buzz(30);
     setBossBar(this.hp / this.maxHp);
     if (this.hp <= 0) this.die();
   }
@@ -1674,6 +1686,7 @@ function updateCores(dt) {
 function collectCore(c) {
   c.got = true;
   L.coresGot++;
+  buzz([25, 40, 25]);
   Sfx.play('collect');
   FX.burst(c.mesh.position, 0xffc832, 26, 7, 2, 0.9, 2);
   flash(0.25, '#ffdf80');
@@ -1788,6 +1801,7 @@ function onVictory() {
   S.state = 'victory';
   hideBossBar();
   hideHint();
+  buzz([120, 80, 120, 80, 250]);
   Sfx.play('fanfare');
   saveGame(true);
   const bossPos = L.boss.group.position.clone();
@@ -2277,6 +2291,8 @@ function togglePause() {
 document.addEventListener('visibilitychange', () => {
   if (document.hidden && S.state === 'playing') togglePause();
 });
+// iOS can leave audio 'interrupted' after calls/app-switching — recover on any tap
+addEventListener('pointerdown', () => { if (S.state !== 'paused') Sfx.resume(); });
 
 // Continue button visibility
 {

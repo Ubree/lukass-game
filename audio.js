@@ -16,7 +16,10 @@ class AudioEngine {
   }
 
   unlock() {
-    if (this.ctx) { if (this.ctx.state === 'suspended') this.ctx.resume(); return; }
+    // iOS 16.4+: play through the media channel so the ringer/silent
+    // switch doesn't mute the game
+    try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch {}
+    if (this.ctx) { if (this.ctx.state !== 'running') this.ctx.resume(); return; }
     const AC = window.AudioContext || window.webkitAudioContext;
     if (!AC) return;
     this.ctx = new AC();
@@ -57,7 +60,7 @@ class AudioEngine {
   toggleMute() { this.setMuted(!this.muted); return this.muted; }
 
   suspend() { if (this.ctx && this.ctx.state === 'running') this.ctx.suspend(); }
-  resume() { if (this.ctx && this.ctx.state === 'suspended') this.ctx.resume(); }
+  resume() { if (this.ctx && this.ctx.state !== 'running') this.ctx.resume(); } // also recovers iOS 'interrupted'
 
   // ---------- low-level helpers ----------
   _osc(type, freq, t0, dur, vol, dest, freqEnd, curve) {
