@@ -1386,14 +1386,17 @@ class MammaBot {
       // is player in beam? (angle measured horizontally — the beam is a floor-sweeping cone)
       const toP = player.pos.clone().sub(this.group.position); toP.y = 0;
       const dist = toP.length();
-      // caught outright if she glides right into Spark
-      if (dist < 2.2) {
+      // caught if you overlap her body — but hugging the bridge edge slips past,
+      // and a boost-jump clears right over her head
+      if (dist < 1.4 && player.pos.y - this.group.position.y < 2.4) {
+        this._catches = (this._catches || 0) + 1;
         say(this.group, `${PLAYER_NAME}! Time to wash your hands! 🧼`, 3, 6.6);
         flash(0.7, '#cfe8ff');
         Sfx.play('teleport');
         player.pos.copy(this.bridgeStart);
         player.vel.set(0, 0, 0);
         player.lastSafe.copy(this.bridgeStart);
+        if (this._catches >= 2) showHint('Wait for Mamma to glide AWAY — then run past, or JUMP over her! 🤫', 5);
         return;
       }
       if (dist < 15) {
@@ -1407,12 +1410,12 @@ class MammaBot {
             blocked = ray.intersectObjects(L.obstacles, false).length > 0;
           }
           if (!blocked) {
-            // pull player
+            // pull player — strong, but running/boosting away CAN beat it
             const pull = this.group.position.clone().sub(player.pos).setY(0).normalize();
-            player.vel.addScaledVector(pull, 80 * dt);
+            player.vel.addScaledVector(pull, 38 * dt);
             if (Math.random() < 0.3) FX.spawn(player.pos.clone().add(_v.set(0, 1, 0)), pull.clone().multiplyScalar(-3), 0xffe08a, 1.5, 0.4, 0);
             if (!this._vacSfx || S.time - this._vacSfx > 0.5) { Sfx.play('vacuum'); this._vacSfx = S.time; }
-            if (flatDist(player.pos, this.group.position) < 3.2) {
+            if (flatDist(player.pos, this.group.position) < 2.6) {
               // CAUGHT — teleport back, no damage
               say(this.group, `${PLAYER_NAME}! Time to wash your hands! 🧼`, 3, 6.6);
               flash(0.7, '#cfe8ff');
