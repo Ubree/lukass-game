@@ -2296,6 +2296,100 @@ function setDifficulty(d) {
 dom.diffExplorer.addEventListener('click', () => { Sfx.unlock(); setDifficulty('explorer'); });
 dom.diffHero.addEventListener('click', () => { Sfx.unlock(); setDifficulty('hero'); });
 
+// ---------------- Language & rules guide ----------------
+const I18N = {
+  lv: {
+    newGame: '▶ JAUNA SPĒLE', cont: '↻ TURPINĀT', contL2: '↻ TURPINĀT — 2. LĪMENIS',
+    explorer: '🟢 PĒTNIEKS', hero: '🔵 VARONIS',
+    rulesBtn: '📖 KĀ SPĒLĒT?', rulesTitle: '📖 KĀ SPĒLĒT', play: '▶ SPĒLĒT!',
+    tip: 'WASD / bultiņas — iet · SPACE — lēkt · KLIKŠĶIS / J — zobens · SHIFT / K — vairogs',
+    rules: `
+      <p class="story">Ļaunais vīruss uzbrūk Debesu Svētnīcai! Drosmīgais pilots <b>LŪKASS</b> un
+      viņa uzticamais dronu draugs <b>Sparks</b> ir pēdējā cerība. Vīruss ir nohipnotizējis pat
+      <b>Tēti un Mammu</b> — viņu acis kļuvušas sarkanas! Atbrīvo viņus un izglāb Svētnīcu! ⭐</p>
+      <h3>🎮 Vadība</h3>
+      <ul>
+        <li><b>Datorā:</b> WASD — iet · SPACE (turi) — raķešlēciens · klikšķis / J — zobens · SHIFT / K — vairogs</li>
+        <li><b>Telefonā:</b> kreisā puse — kustības svira · labā puse — velc, lai grozītu kameru · pogas: ⚔ zobens, 🛡 vairogs, 🚀 lēciens</li>
+      </ul>
+      <h3>⬡ Tavs uzdevums</h3>
+      <ul>
+        <li>Savāc <b>5 Nexus kristālus</b> pa debesu salām — seko <b>zeltainajai bultai</b> virs Sparka!</li>
+        <li>🥿 <b>Atbrīvo Tēti:</b> sit ar zobenu, līdz violetā vīrusa josla ir tukša! Kad viņš skrien apskaut — palec sāņus! Kad viņš lec uz vēdera — <b>pārlec pāri gaismas gredzenam!</b></li>
+        <li>🌀 Ej cauri <b>portālam</b> uz Lavas kodolu!</li>
+        <li>🧹 <b>Tiec garām Mammai uz tilta:</b> skrien, kad viņa aizpeld tālāk, slēpies aiz stabiem vai pārlec viņai pāri! Ja noķer — nekas slikts, tikai jānomazgā rokas 🧼</li>
+        <li>❤ <b>Atbrīvo Mammu:</b> burbuļus pārdur ar zobenu, brokoļus atsit ar vairogu — tie trāpa viņai pašai!</li>
+        <li>⛏ <b>Uzvari GIGA-URBI:</b> izvairies no uzbrukumiem un, kad atveras <b>zilais kodols</b> — skrien klāt un SIT!</li>
+      </ul>
+      <h3>💡 Padomi</h3>
+      <ul>
+        <li>Krist nav bail — Sparks tevi vienmēr izglābs ar avārijas teleportu! ✨</li>
+        <li>Ja zaudē — turpini no pēdējā kristāla, nekas nepazūd!</li>
+        <li>🛡 Vairogs atsit ienaidnieku šāviņus atpakaļ!</li>
+        <li>Atbrīvotie Tētis un Mamma tevi uzmundrinās boss cīņā un metīs pankūkas 🥞</li>
+      </ul>`,
+  },
+  en: {
+    newGame: '▶ NEW GAME', cont: '↻ CONTINUE', contL2: '↻ CONTINUE — LEVEL 2',
+    explorer: '🟢 EXPLORER', hero: '🔵 HERO',
+    rulesBtn: '📖 HOW TO PLAY?', rulesTitle: '📖 HOW TO PLAY', play: '▶ PLAY!',
+    tip: 'WASD / Arrows — move · SPACE — boost jump · CLICK / J — sword · SHIFT / K — shield',
+    rules: `
+      <p class="story">An evil virus is attacking the Sky Sanctuary! Brave pilot <b>LŪKASS</b> and his
+      trusty droid friend <b>Spark</b> are the last hope. The virus has even hypnotized
+      <b>Dad and Mom</b> — their eyes turned red! Free them and save the Sanctuary! ⭐</p>
+      <h3>🎮 Controls</h3>
+      <ul>
+        <li><b>Computer:</b> WASD — move · SPACE (hold) — boost jump · click / J — sword · SHIFT / K — shield</li>
+        <li><b>Phone:</b> left side — move stick · right side — swipe to turn the camera · buttons: ⚔ sword, 🛡 shield, 🚀 jump</li>
+      </ul>
+      <h3>⬡ Your mission</h3>
+      <ul>
+        <li>Collect the <b>5 Nexus crystals</b> across the sky islands — follow the <b>golden arrow</b> above Spark!</li>
+        <li>🥿 <b>Free Tētis:</b> slash him until the purple virus bar is empty! When he charges for a hug — step aside! When he belly-flops — <b>jump over the glowing ring!</b></li>
+        <li>🌀 Step through the <b>portal</b> to the Lava Core!</li>
+        <li>🧹 <b>Sneak past Mamma on the bridge:</b> run when she glides away, hide behind pillars, or jump right over her! Getting caught is harmless — just "wash your hands" 🧼</li>
+        <li>❤ <b>Free Mamma:</b> pop bubbles with your sword, deflect broccoli with the shield — it hits her back!</li>
+        <li>⛏ <b>Beat the GIGA-DRILL:</b> dodge everything, and when the <b>blue core opens</b> — run in and STRIKE!</li>
+      </ul>
+      <h3>💡 Tips</h3>
+      <ul>
+        <li>Falling is never scary — Spark always rescues you with an emergency teleport! ✨</li>
+        <li>If you're defeated, you continue from your last crystal — nothing is lost!</li>
+        <li>🛡 The shield bounces enemy shots right back!</li>
+        <li>Freed Tētis and Mamma cheer for you in the boss fight and toss pancakes 🥞</li>
+      </ul>`,
+  },
+};
+let LANG = localStorage.getItem('cs_lang') || 'lv';
+function applyLang() {
+  const t = I18N[LANG];
+  $('lang-lv').classList.toggle('selected', LANG === 'lv');
+  $('lang-en').classList.toggle('selected', LANG === 'en');
+  dom.btnNew.textContent = t.newGame;
+  const sv = loadSave();
+  dom.btnContinue.textContent = (sv && !sv.completed && sv.level >= 2) ? t.contL2 : t.cont;
+  dom.diffExplorer.textContent = t.explorer;
+  dom.diffHero.textContent = t.hero;
+  $('btn-rules').textContent = t.rulesBtn;
+  $('rules-title').textContent = t.rulesTitle;
+  $('btn-rules-close').textContent = t.play;
+  $('title-tip').textContent = t.tip;
+  $('rules-content').innerHTML = t.rules;
+}
+function setLang(l) { LANG = l; localStorage.setItem('cs_lang', l); applyLang(); Sfx.play('click'); }
+$('lang-lv').addEventListener('click', () => { Sfx.unlock(); setLang('lv'); });
+$('lang-en').addEventListener('click', () => { Sfx.unlock(); setLang('en'); });
+$('btn-rules').addEventListener('click', () => {
+  Sfx.unlock(); Sfx.play('click');
+  $('rules-screen').classList.remove('hidden');
+});
+$('btn-rules-close').addEventListener('click', () => {
+  Sfx.play('click');
+  $('rules-screen').classList.add('hidden');
+});
+applyLang();
+
 function requestFullscreenIfMobile() {
   if (!IS_TOUCH) return;
   const el = document.documentElement;
@@ -2358,12 +2452,10 @@ addEventListener('pointerdown', () => { if (S.state !== 'paused') Sfx.resume(); 
 // Continue button visibility
 {
   const sv = loadSave();
-  if (sv && !sv.completed && sv.level >= 2) {
-    dom.btnContinue.classList.remove('hidden');
-    dom.btnContinue.textContent = '↻ CONTINUE — LEVEL 2';
-  }
+  if (sv && !sv.completed && sv.level >= 2) dom.btnContinue.classList.remove('hidden');
   if (sv?.difficulty) setDifficulty(sv.difficulty);
   else setDifficulty(S.difficulty);
+  applyLang();
 }
 
 // ---------------- Title scene (cinematic backdrop) ----------------

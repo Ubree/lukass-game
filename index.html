@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
 <title>Cyber-Shield: Spark's Rescue — Pilot Lūkass</title>
-<link rel="stylesheet" href="style.css?v=2">
+<link rel="stylesheet" href="style.css?v=3">
 <script type="importmap">
 { "imports": {
   "three": "https://cdn.jsdelivr.net/npm/three@0.160.1/build/three.module.js",
@@ -78,6 +78,10 @@
       <div id="logo-sub">SPARK'S RESCUE</div>
     </div>
     <div id="title-pilot">★ PILOT: LŪKASS ★</div>
+    <div id="lang-row">
+      <button class="lang-btn selected" id="lang-lv">🇱🇻 LATVISKI</button>
+      <button class="lang-btn" id="lang-en">🇬🇧 ENGLISH</button>
+    </div>
     <div id="diff-row">
       <button class="diff-btn selected" id="diff-explorer">🟢 EXPLORER</button>
       <button class="diff-btn" id="diff-hero">🔵 HERO</button>
@@ -85,8 +89,17 @@
     <div id="title-buttons">
       <button class="menu-btn primary" id="btn-new">▶ NEW GAME</button>
       <button class="menu-btn hidden" id="btn-continue">↻ CONTINUE</button>
+      <button class="menu-btn" id="btn-rules">📖 HOW TO PLAY?</button>
     </div>
     <div id="title-tip">WASD / Arrows — move · SPACE — boost jump · CLICK / J — sword · SHIFT / K — shield</div>
+  </div>
+</div>
+
+<div id="rules-screen" class="screen hidden">
+  <div class="panel rules-panel">
+    <h2 id="rules-title">📖 HOW TO PLAY</h2>
+    <div id="rules-content"></div>
+    <button class="menu-btn primary" id="btn-rules-close">▶ PLAY!</button>
   </div>
 </div>
 
@@ -118,6 +131,6 @@
   <div class="rotate-inner">🔄<br>Rotate your device, Lūkass!</div>
 </div>
 
-<script type="module" src="game.js?v=2"></script>
+<script type="module" src="game.js?v=3"></script>
 </body>
 </html>
