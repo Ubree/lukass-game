@@ -4,13 +4,13 @@
 // ============================================================
 import * as THREE from 'three';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
-import { Sfx } from './audio.js';
+import { Sfx } from './audio.js?v=2';
 import {
   makeSpark, makeDrone, makeCore, makePortal, makeIsland, makeBridge, makePlatform,
   makeLava, makeSkyDome, makeCloud, makeRockSpire, makeTetis, makeMamma, makeGigaDrill,
   makeLaserBall, makeSlipper, makeBroccoli, makeBubble, makePancake, makeHealthOrb,
   makeObjectiveArrow, makeHalo, glowTex,
-} from './models.js';
+} from './models.js?v=2';
 
 const PLAYER_NAME = 'LŪKASS';
 const SAVE_KEY = 'cs_save_v1';
@@ -187,7 +187,8 @@ bindBtn(dom.btnJump, () => { input.jumpBuffer = 0.13; input.jumpHeld = true; }, 
 bindBtn(dom.btnShield, () => { input.shieldHeld = true; }, () => { input.shieldHeld = false; });
 
 // right-half swipe = rotate camera (standard third-person mobile scheme)
-const camZone = $('cam-zone');
+// (guarded: a stale-cached index.html without #cam-zone must not crash the game)
+const camZone = $('cam-zone') || document.createElement('div');
 const camDrag = { id: null, x: 0, y: 0 };
 camZone.addEventListener('pointerdown', e => {
   if (camDrag.id !== null) return;
