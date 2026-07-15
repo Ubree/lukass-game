@@ -207,7 +207,9 @@ body.cine .letterbox { height: 11vh; }
 
 /* ============ Touch controls ============ */
 #touch { position: fixed; inset: 0; z-index: 15; pointer-events: none; }
-#joy-zone { position: absolute; right: 0; top: 0; bottom: 0; width: 50%; pointer-events: auto; }
+#joy-zone { position: absolute; left: 0; top: 0; bottom: 0; width: 50%; pointer-events: auto; }
+/* right half: swipe to rotate the camera (starts below the pause/mute buttons) */
+#cam-zone { position: absolute; right: 0; top: 110px; bottom: 0; width: 50%; pointer-events: auto; touch-action: none; }
 #joy-ring {
   position: absolute; width: 120px; height: 120px;
   border: 2px solid rgba(41,230,255,.7); border-radius: 50%;
@@ -225,9 +227,9 @@ body.cine .letterbox { height: 11vh; }
 }
 #touch-buttons {
   position: absolute;
-  left: calc(18px + env(safe-area-inset-left));
+  right: calc(18px + env(safe-area-inset-right));
   bottom: calc(18px + env(safe-area-inset-bottom));
-  display: flex; flex-direction: row-reverse; align-items: flex-end; gap: 14px;
+  display: flex; align-items: flex-end; gap: 14px;
   pointer-events: auto;
 }
 .tbtn {

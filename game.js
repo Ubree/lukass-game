@@ -150,7 +150,7 @@ dom.joyZone.addEventListener('pointerdown', e => {
   dom.joyRing.classList.remove('hidden');
   dom.joyRing.style.left = joy.cx + 'px';
   dom.joyRing.style.top = joy.cy + 'px';
-  dom.joyZone.setPointerCapture(e.pointerId);
+  try { dom.joyZone.setPointerCapture(e.pointerId); } catch {}
   input.wigglePresses++;
 });
 dom.joyZone.addEventListener('pointermove', e => {
@@ -185,6 +185,27 @@ function bindBtn(el, down, up) {
 bindBtn(dom.btnAttack, () => { input.attackQueued = true; });
 bindBtn(dom.btnJump, () => { input.jumpBuffer = 0.13; input.jumpHeld = true; }, () => { input.jumpHeld = false; });
 bindBtn(dom.btnShield, () => { input.shieldHeld = true; }, () => { input.shieldHeld = false; });
+
+// right-half swipe = rotate camera (standard third-person mobile scheme)
+const camZone = $('cam-zone');
+const camDrag = { id: null, x: 0, y: 0 };
+camZone.addEventListener('pointerdown', e => {
+  if (camDrag.id !== null) return;
+  camDrag.id = e.pointerId; camDrag.x = e.clientX; camDrag.y = e.clientY;
+  try { camZone.setPointerCapture(e.pointerId); } catch {}
+  input.wigglePresses++;
+});
+camZone.addEventListener('pointermove', e => {
+  if (e.pointerId !== camDrag.id) return;
+  const dx = e.clientX - camDrag.x, dy = e.clientY - camDrag.y;
+  camDrag.x = e.clientX; camDrag.y = e.clientY;
+  cam.yaw -= dx * 0.0075;
+  cam.up = THREE.MathUtils.clamp(cam.up + dy * 0.02, 1.8, 6.5);
+  cam.manualT = 1.2;
+});
+function camDragEnd(e) { if (e.pointerId === camDrag.id) camDrag.id = null; }
+camZone.addEventListener('pointerup', camDragEnd);
+camZone.addEventListener('pointercancel', camDragEnd);
 
 // rotate overlay
 function checkOrientation() {
@@ -436,8 +457,10 @@ function updatePlayer(dt) {
 
   // ---- movement (camera-relative) ----
   readMoveInput(dt);
+  // camera-forward, horizontally: the camera sits at yaw+π behind the player,
+  // so its view direction is (sin yaw, 0, cos yaw). Stick-up must map to THIS.
   const camYawV = cam.yaw;
-  const fwd = new THREE.Vector3(-Math.sin(camYawV), 0, -Math.cos(camYawV));
+  const fwd = new THREE.Vector3(Math.sin(camYawV), 0, Math.cos(camYawV));
   const right = new THREE.Vector3(-fwd.z, 0, fwd.x);
   const wish = new THREE.Vector3()
     .addScaledVector(fwd, -input.move.y)
@@ -684,14 +707,21 @@ function damageNoKill(amount) { // falls never defeat you
 }
 
 // ---------------- Camera ----------------
-const cam = { yaw: Math.PI, pos: new THREE.Vector3(0, 6, 8), look: new THREE.Vector3(), shakeOff: new THREE.Vector3() };
+const cam = { yaw: Math.PI, up: 3.4, manualT: 0, pos: new THREE.Vector3(0, 6, 8), look: new THREE.Vector3(), shakeOff: new THREE.Vector3() };
+function angDelta(a, b) { return ((a - b + Math.PI) % (Math.PI * 2) + Math.PI * 2) % (Math.PI * 2) - Math.PI; }
 function updateCamera(dt) {
-  // yaw eases toward player's heading while moving
+  // Gentle follow: rotate behind the player ONLY when he runs roughly away
+  // from the camera. Moving toward or across the camera never flips the view
+  // (that caused spinning/backward controls). Manual swipe overrides for a bit.
   const hvLen = Math.hypot(player.vel.x, player.vel.z);
-  if (hvLen > 1.2) cam.yaw = dampAngle(cam.yaw, player.heading, 2.2, dt);
+  cam.manualT = Math.max(0, cam.manualT - dt);
+  if (hvLen > 1.5 && cam.manualT <= 0) {
+    const moveDir = Math.atan2(player.vel.x, player.vel.z);
+    if (Math.abs(angDelta(moveDir, cam.yaw)) < 1.0) cam.yaw = dampAngle(cam.yaw, moveDir, 1.6, dt);
+  }
 
   const back = 6.2 + hvLen * 0.16;
-  const up = 3.4 + (player.grounded ? 0 : 0.7);
+  const up = cam.up + (player.grounded ? 0 : 0.7);
   const desired = new THREE.Vector3(
     player.pos.x + Math.sin(cam.yaw + Math.PI) * back,
     player.pos.y + up,
@@ -1850,14 +1880,16 @@ const tut = {
   step: -1, done: false,
   start() {
     this.step = 0; this.done = false;
-    showHint(IS_TOUCH ? `Move with the RIGHT STICK, ${PLAYER_NAME}!` : `Move with WASD, ${PLAYER_NAME}!`, 99);
+    showHint(IS_TOUCH ? `Touch the LEFT side and drag to move, ${PLAYER_NAME}!` : `Move with WASD, ${PLAYER_NAME}!`, 99);
   },
   onMove() { if (this.step === 0) { this.step = 1; showHint(IS_TOUCH ? 'Hold 🚀 to BOOST-JUMP!' : 'Hold SPACE to BOOST-JUMP!', 99); } },
   onJump() { if (this.step === 1) { this.step = 2; showHint(IS_TOUCH ? 'Tap ⚔ to swing your sword!' : 'CLICK or press J to swing your sword!', 99); } },
   onAttack() {
     if (this.step === 2) {
       this.step = 3; this.done = true;
-      showHint(`Great, ${PLAYER_NAME}! Follow the GOLDEN ARROW to the Nexus Cores! ⬡`, 5);
+      showHint(IS_TOUCH
+        ? `Swipe the RIGHT side to look around! Follow the GOLDEN ARROW! ⬡`
+        : `Great, ${PLAYER_NAME}! Follow the GOLDEN ARROW to the Nexus Cores! ⬡`, 6);
     }
   },
   onShield() {},
