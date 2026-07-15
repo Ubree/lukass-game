@@ -568,6 +568,7 @@ function updatePlayer(dt) {
     if (player.attackCd <= 0) {
       player.attackCd = 0.42;
       player.swinging = 0.34;
+      swordAimAssist();
       Sfx.play('slash');
       tut.onAttack();
     }
@@ -626,42 +627,66 @@ function applyPlayerVisuals(dt, u) {
   } else blobShadow.visible = false;
 }
 
+// is the miniboss currently a valid sword target?
+function minibossTargetable() {
+  if (!L.miniboss || L.miniboss.freed) return false;
+  if (L.miniboss.mode !== undefined) return L.miniboss.mode === 'fight'; // Mamma
+  return L.miniboss.active;                                             // Tētis
+}
+
 function doSwordHit() {
   const range = player.swordRange();
   const fwd = new THREE.Vector3(Math.sin(player.heading), 0, Math.cos(player.heading));
   const hitPos = player.pos.clone().addScaledVector(fwd, range * 0.6); hitPos.y += 1;
   let hitAny = false;
-  const tryHit = (targetPos) => {
+  // bodyR = the target's body radius — big bots are hit at their SURFACE, not center
+  const tryHit = (targetPos, bodyR = 0) => {
     const to = targetPos.clone().sub(player.pos); const dy = Math.abs(to.y); to.y = 0;
-    const dist = to.length();
-    if (dist > range + 0.8 || dy > 3.2) return false;
-    if (dist > 1.2) { to.normalize(); if (to.dot(fwd) < 0.35) return false; }
+    const dist = Math.max(0, to.length() - bodyR);
+    if (dist > range + 0.8 || dy > 3.6) return false;
+    if (dist > 2.0) { to.normalize(); if (to.dot(fwd) < 0.15) return false; } // wide arc; point-blank always hits
     return true;
   };
   // drones
   for (const e of L.enemies) {
     if (e.dead) continue;
-    if (tryHit(e.group.position)) { e.hurt(player.swordDmg()); hitAny = true; }
+    if (tryHit(e.group.position, 0.6)) { e.hurt(player.swordDmg()); hitAny = true; }
   }
-  // minibosses (virus)
-  if (L.miniboss && L.miniboss.active && !L.miniboss.freed && tryHit(L.miniboss.group.position)) {
+  // minibosses (virus) — Tētis/Mamma are ~2 units wide
+  if (minibossTargetable() && tryHit(L.miniboss.group.position, 2.1)) {
     L.miniboss.virusHit(12); hitAny = true;
   }
   // boss weak point
   if (L.boss && L.boss.active && !L.boss.dead) {
     const wp = L.boss.weakWorldPos();
-    if (L.boss.weakOpen > 0 && player.pos.distanceTo(wp) < range + 1.6) {
+    if (L.boss.weakOpen > 0 && player.pos.distanceTo(wp) < range + 2.4) {
       L.boss.hurt(S.perks.swordUp ? 75 : 60); hitAny = true;
     }
   }
   // pop bubbles
   for (const pr of L.projectiles) {
-    if (pr.kind === 'bubble' && !pr.dead && tryHit(pr.mesh.position)) {
+    if (pr.kind === 'bubble' && !pr.dead && tryHit(pr.mesh.position, 0.8)) {
       pr.dead = true; FX.burst(pr.mesh.position, 0x88ccff, 10, 4, 1.3, 0.4, 2); Sfx.play('pop');
     }
   }
   if (hitAny) { S.hitstop = Math.max(S.hitstop, 0.06); buzz(20); }
   FX.burst(hitPos, 0x66e0ff, 5, 3, 1.1, 0.25, 0);
+}
+
+// melee aim-assist: when a swing starts, turn Spark toward the nearest target
+function swordAimAssist() {
+  const reach = player.swordRange() + 2.6;
+  const fwd = new THREE.Vector3(Math.sin(player.heading), 0, Math.cos(player.heading));
+  let best = null, bestD = 1e9;
+  const consider = (pos, bodyR) => {
+    const to = pos.clone().sub(player.pos); to.y = 0;
+    const d = Math.max(0, to.length() - bodyR);
+    if (d < reach && d < bestD && to.normalize().dot(fwd) > -0.3) { best = pos; bestD = d; }
+  };
+  for (const e of L.enemies) if (!e.dead) consider(e.group.position, 0.6);
+  if (minibossTargetable()) consider(L.miniboss.group.position, 2.1);
+  if (L.boss && L.boss.active && !L.boss.dead && L.boss.weakOpen > 0) consider(L.boss.weakWorldPos(), 1.4);
+  if (best) player.heading = Math.atan2(best.x - player.pos.x, best.z - player.pos.z);
 }
 
 function damagePlayer(amount, sourcePos, ignoreInvuln = false) {
