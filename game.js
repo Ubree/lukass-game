@@ -2391,10 +2391,16 @@ $('btn-rules-close').addEventListener('click', () => {
 applyLang();
 
 function requestFullscreenIfMobile() {
+  // iPhone Safari has no fullscreen API at all — every step here must be
+  // optional and crash-proof, or NEW GAME dies before the game starts.
   if (!IS_TOUCH) return;
-  const el = document.documentElement;
-  (el.requestFullscreen || el.webkitRequestFullscreen || function () {}).call(el).catch?.(() => {});
-  screen.orientation?.lock?.('landscape').catch(() => {});
+  try {
+    const el = document.documentElement;
+    const fn = el.requestFullscreen || el.webkitRequestFullscreen;
+    const p = fn ? fn.call(el) : null;
+    p?.catch?.(() => {});
+  } catch {}
+  try { screen.orientation?.lock?.('landscape')?.catch?.(() => {}); } catch {}
 }
 
 function startGame(fromSave) {
