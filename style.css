@@ -242,6 +242,16 @@ body.cine .letterbox { height: 11vh; }
 }
 .tbtn.big { width: 86px; height: 86px; font-size: 34px; margin-bottom: 26px; }
 .tbtn.pressed { background: rgba(41,230,255,.45); transform: scale(0.92); }
+.tbtn { touch-action: none; }
+.menu-btn, .diff-btn, .lang-btn, .hud-btn { touch-action: manipulation; }
+
+/* iOS Safari: the bottom toolbar overlays fixed-bottom content until it
+   collapses. Anchor the buttons to the DYNAMIC viewport bottom instead —
+   (100lvh - 100dvh) equals the visible toolbar height, 0 when hidden. */
+body.ios #touch-buttons {
+  bottom: calc(100lvh - 100dvh + 16px + env(safe-area-inset-bottom));
+}
+body.ios #hint { bottom: calc(100lvh - 100dvh + 14vh); }
 
 /* ============ Screens ============ */
 .screen {

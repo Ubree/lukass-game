@@ -48,6 +48,23 @@ const Q = {
 }[TIER];
 
 // ---------------- Renderer ----------------
+// ---------------- iOS quirks ----------------
+const IS_IOS = /iPad|iPhone|iPod/.test(navigator.userAgent)
+  || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+if (IS_IOS) {
+  document.body.classList.add('ios');
+  // iOS ignores user-scalable=no — block pinch zoom (Safari gesture events)…
+  for (const ev of ['gesturestart', 'gesturechange', 'gestureend'])
+    document.addEventListener(ev, e => e.preventDefault(), { passive: false });
+  // …and double-tap zoom (two taps within 350 ms)
+  let lastTouchEnd = 0;
+  document.addEventListener('touchend', e => {
+    const now = Date.now();
+    if (now - lastTouchEnd < 350 && e.cancelable) e.preventDefault();
+    lastTouchEnd = now;
+  }, { passive: false });
+}
+
 const canvas = $('c');
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: TIER !== 'low', powerPreference: 'high-performance' });
 renderer.setPixelRatio(Q.pr);
@@ -67,11 +84,15 @@ const _pmrem = new THREE.PMREMGenerator(renderer);
 const ENV_TEX = _pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
 _pmrem.dispose();
 let renderScale = 1; // dynamic resolution
-addEventListener('resize', () => {
+function onViewportResize() {
   camera.aspect = innerWidth / innerHeight;
   camera.updateProjectionMatrix();
   renderer.setSize(innerWidth * renderScale, innerHeight * renderScale, false);
-});
+}
+addEventListener('resize', onViewportResize);
+// iOS resizes the viewport when the Safari toolbar collapses/expands —
+// visualViewport fires reliably for that where window.resize may not
+window.visualViewport?.addEventListener('resize', onViewportResize);
 
 // ---------------- Global state ----------------
 const S = {
